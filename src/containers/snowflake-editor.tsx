@@ -13,7 +13,11 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   private container: HTMLDivElement;
 
   public componentDidMount() {
-    const geometry = new THREE.Geometry();
+    // const geometry = new THREE.Geometry();
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
   }
 

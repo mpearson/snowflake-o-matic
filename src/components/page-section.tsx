@@ -1,21 +1,18 @@
-import * as React from 'react';
-import classNames from 'classnames';
+import * as React from "react";
+import * as classNames from "classnames";
 
-// const inlineStyles = {};
-
-export function PageSection({className = '', children = undefined}) {
-
-  const mainClass = classNames(
-    className.toString(),
-    'o-grid',
+export const PageSection: React.SFC<{className?: string}> = props => {
+  const classList = classNames(
+    props.className.toString(),
+    "o-grid",
   );
   const innerClass = classNames(
-    'o-grid__cell',
+    "o-grid__cell",
   );
 
   return (
-    <section className={mainClass}>
-      <div className={innerClass}>{children}</div>
+    <section className={classList}>
+      <div className={innerClass}>{props.children}</div>
     </section>
   );
 }

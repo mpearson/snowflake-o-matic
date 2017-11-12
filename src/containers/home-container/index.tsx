@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { Link } from 'react-router';
-import { PageSection } from '../../components/page-section';
-import { PageHero } from '../../components/page-hero';
+import * as React from "react";
+import { Link } from "react-router-dom";
+import { PageSection } from "../../components/page-section";
+import { PageHero } from "../../components/page-hero";
 
 export function HomeContainer() {
   return (

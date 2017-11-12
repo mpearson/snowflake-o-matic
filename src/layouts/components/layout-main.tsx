@@ -1,5 +1,5 @@
-import * as React from 'react';
-import classNames from 'classnames';
+import * as React from "react";
+import * as classNames from "classnames";
 
 export const LayoutMain: React.SFC<{className?: string}> = props => {
 
@@ -7,7 +7,7 @@ export const LayoutMain: React.SFC<{className?: string}> = props => {
     props.className,
   );
   const innerClass = classNames(
-    'o-container o-container--medium',
+    "o-container o-container--medium",
   );
 
   return (

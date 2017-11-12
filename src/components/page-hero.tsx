@@ -1,28 +1,31 @@
-import * as React from 'react';
-import classNames from 'classnames';
+import * as React from "react";
+import * as classNames from "classnames";
 
-// const inlineStyles = {};
+export interface PageHeroProps {
+  className?: string;
+  title?: string;
+  subtitle?: string;
+}
 
-export function PageHero({className = '', children = undefined,
-  title = '', subtitle = ''}) {
+export const PageHero: React.SFC<PageHeroProps> = props => {
 
-  const mainClass = classNames(
-    className.toString(),
-    'u-centered',
-    'u-letter-box--super',
+  const classList = classNames(
+    props.className,
+    "u-centered",
+    "u-letter-box--super",
   );
 
   return (
-    <section className={mainClass}>
+    <section className={classList}>
       <h1 className="c-heading u-window-box--none">
-        {title}
+        {props.title}
       </h1>
       <h3 className="c-heading u-window-box--none">
-        {subtitle}
+        {props.subtitle}
       </h3>
       <div>
-        {children}
+        {props.children}
       </div>
     </section>
   );
-}
+};

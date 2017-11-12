@@ -1,6 +1,5 @@
-import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
-import { routerReducer } from 'react-router-redux';
-import { combineEpics, createEpicMiddleware } from 'redux-observable';
+import { combineReducers, createStore, compose, applyMiddleware } from "redux";
+import { routerReducer } from "react-router-redux";
 
 export interface SnowflakeState {
   seedHistory: string[];

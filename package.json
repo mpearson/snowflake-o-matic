@@ -1,180 +1,106 @@
 {
-  "name": "snowflake-o-matic",
-  "version": "1.0.0",
-  "description": "Futuristic, production-ready development environment for building Component-Driven, Flux Single Page Applications with React, Redux and TypeScript - powered by JSPM (SystemJS with Hot-Reload & Rollup).",
-  "author": "Piotr Witek <piotrek.witek@gmail.com> (http://piotrwitek.github.io/)",
-  "homepage": "http://piotrwitek.github.io/react-redux-typescript-starter-kit/",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/piotrwitek/react-redux-typescript-starter-kit.git"
-  },
-  "bugs": {
-    "url": "https://github.com/piotrwitek/react-redux-typescript-starter-kit/issues"
-  },
-  "license": "MIT",
-  "main": "server.js",
-  "scripts": {
-    "clean": "shx rm -rf dist node_modules jspm_packages",
-    "init": "jspm install && npm run dev:bundle",
-    "update": "jspm update && npm run dev:bundle",
-    "dev": "jspm-hmr -FO",
-    "dev:bundle": "node scripts/build.js dev",
-    "dev:unbundle": "shx rm temp/vendor.dev.js",
-    "prod": "jspm-hmr dist --port 3001 -FO",
-    "build": "npm run build:app && npm run build:vendor",
-    "build:app": "node scripts/build.js app",
-    "build:vendor": "node scripts/build.js vendor",
-    "build:debug": "node scripts/build.js debug",
-    "bad": "npm run build:app && npm run deploy",
-    "bvd": "npm run build:vendor && npm run deploy",
-    "lint": "tslint --project 'src/tsconfig.json'",
-    "tsc": "tsc -p src/ --noEmit",
-    "tsc:watch": "tsc -p src/ --noEmit -w",
-    "test": "jest --config jest.json",
-    "test:update": "jest --config jest.json -u",
-    "test:redux": "jest --config jest.json src/store/currency-converter/utils.spec.tsx",
-    "precommit": "yarn run lint",
-    "prepush": "yarn run tsc & yarn run test",
-    "deploy:init": "node scripts/deploy.js init",
-    "deploy": "git checkout gh-pages && cd dist && git add --all && git commit -m \"New Release\" && git push"
+  "name": "react-typescript-tutorial",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "autoprefixer": "7.1.6",
+    "case-sensitive-paths-webpack-plugin": "2.1.1",
+    "chalk": "2.3.0",
+    "cli-highlight": "1.1.4",
+    "connect-history-api-fallback": "1.5.0",
+    "cross-spawn": "5.1.0",
+    "css-loader": "0.28.7",
+    "detect-port": "1.2.2",
+    "dotenv": "4.0.0",
+    "extract-text-webpack-plugin": "3.0.2",
+    "file-loader": "1.1.5",
+    "filesize": "3.5.11",
+    "fs-extra": "4.0.2",
+    "gzip-size": "4.0.0",
+    "html-webpack-plugin": "2.30.1",
+    "http-proxy-middleware": "0.17.4",
+    "jest": "21.2.1",
+    "json-loader": "0.5.7",
+    "object-assign": "4.1.1",
+    "postcss-loader": "2.0.8",
+    "promise": "8.0.1",
+    "react-addons-test-utils": "^15.4.2",
+    "react-dev-utils": "^4.2.1",
+    "recursive-readdir": "2.2.1",
+    "strip-ansi": "4.0.0",
+    "style-loader": "0.19.0",
+    "ts-loader": "^3.1.1",
+    "tslint": "^5.8.0",
+    "tslint-loader": "^3.3.0",
+    "tslint-react": "^3.2.0",
+    "typescript": "^2.1.4",
+    "url-loader": "0.6.2",
+    "webpack": "3.8.1",
+    "webpack-dev-server": "2.9.4",
+    "webpack-manifest-plugin": "1.3.2",
+    "whatwg-fetch": "2.0.3"
   },
   "dependencies": {
+    "@types/classnames": "^2.2.3",
+    "@types/enzyme": "^3.1.3",
+    "@types/history": "^4.6.1",
+    "@types/jest": "^21.1.5",
+    "@types/node": "^8.0.51",
+    "@types/react": "16.0.22",
+    "@types/react-dom": "^16.0.3",
+    "@types/react-redux": "^5.0.12",
+    "@types/react-router": "^4.0.17",
+    "@types/react-router-dom": "^4.2.1",
+    "@types/react-router-redux": "^5.0.10",
     "@types/three": "^0.84.29",
+    "classnames": "^2.2.5",
+    "enzyme": "^3.1.1",
+    "history": "^4.7.2",
+    "less": "^2.7.3",
+    "less-loader": "^4.0.5",
+    "react": "^16.1.0",
+    "react-dom": "^16.1.0",
+    "react-redux": "^5.0.2",
+    "react-router": "^4.2.0",
+    "react-router-dom": "^4.2.2",
+    "react-router-redux": "^5.0.0-alpha.8",
+    "redux": "^3.6.0",
+    "svg-react-loader": "^0.4.5",
     "three": "^0.88.0"
   },
-  "devDependencies": {
-    "@types/classnames": "^0.0.32",
-    "@types/jest": "^19.2.2",
-    "@types/node": "^7.0.8",
-    "@types/react": "^15.0.16",
-    "@types/react-dom": "^0.14.20",
-    "@types/react-redux": "^4.4.37",
-    "@types/react-router": "^3.0.5",
-    "@types/react-router-redux": "^4.0.41",
-    "@types/systemjs": "^0.19.33",
-    "husky": "^0.13.2",
-    "jest": "^19.0.2",
-    "jspm": "0.17.0-beta.32",
-    "jspm-hmr": "^1.0.0-rc6",
-    "react-redux-typescript": "^2.2.0",
-    "redux-observable": "^0.14.1",
-    "regenerator": "^0.9.7",
-    "reselect": "^2.5.4",
-    "rxjs": "^5.2.0",
-    "shelljs": "^0.7.7",
-    "shx": "^0.2.2",
-    "ts-jest": "^19.0.1",
-    "tslint": "^4.5.1",
-    "typescript": "^2.2.1"
+  "scripts": {
+    "start": "node scripts/start.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js --env=jsdom"
   },
-  "jspm": {
-    "name": "app",
-    "main": "app.tsx",
-    "hooks": {
-      "postinstall": "scripts/postinstall.js"
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}"
+    ],
+    "setupFiles": [
+      "<rootDir>\\config\\polyfills.js"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>[/\\\\](build|docs|node_modules)[/\\\\]"
+    ],
+    "testEnvironment": "node",
+    "testURL": "http://localhost",
+    "transform": {
+      "^.+\\.css$": "<rootDir>\\config\\jest\\cssTransform.js",
+      "^.+\\.tsx?$": "<rootDir>\\config\\jest\\typescriptTransform.js",
+      "^(?!.*\\.(css|json)$)": "<rootDir>\\config\\jest\\fileTransform.js"
     },
-    "dependencies": {
-      "classnames": "npm:classnames@^2.2.5",
-      "csjs": "npm:csjs@^1.1.0",
-      "insert-css": "npm:insert-css@^1.1.0",
-      "less": "npm:systemjs-less-plugin@^2.2.2",
-      "react-dom": "npm:react-dom@^15.4.2",
-      "react-redux": "npm:react-redux@^5.0.3",
-      "react-redux-typescript": "npm:react-redux-typescript@^2.2.0",
-      "react-router": "npm:react-router@3.0.2",
-      "react-router-redux": "npm:react-router-redux@^4.0.8",
-      "redux-observable": "npm:redux-observable@^0.13.0",
-      "reselect": "npm:reselect@^2.5.4",
-      "tslib": "npm:tslib@^1.6.0",
-      "whatwg-fetch": "npm:whatwg-fetch@^1.1.1"
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx)$"
+    ],
+    "moduleNameMapper": {
+      "^react-native$": "react-native-web"
     },
-    "devDependencies": {
-      "plugin-typescript": "github:frankwallis/plugin-typescript@^5.3.3",
-      "systemjs-hot-reloader": "github:alexisvincent/systemjs-hot-reloader@^0.6.0"
-    },
-    "peerDependencies": {
-      "assert": "npm:jspm-nodelibs-assert@^0.2.0",
-      "buffer": "npm:jspm-nodelibs-buffer@^0.2.0",
-      "child_process": "npm:jspm-nodelibs-child_process@^0.2.0",
-      "constants": "npm:jspm-nodelibs-constants@^0.2.0",
-      "crypto": "npm:jspm-nodelibs-crypto@^0.2.0",
-      "css": "github:systemjs/plugin-css@^0.1.36",
-      "domain": "npm:jspm-nodelibs-domain@^0.2.0",
-      "events": "npm:jspm-nodelibs-events@^0.2.0",
-      "fs": "npm:jspm-nodelibs-fs@^0.2.0",
-      "http": "npm:jspm-nodelibs-http@^0.2.0",
-      "https": "npm:jspm-nodelibs-https@^0.2.0",
-      "module": "npm:jspm-nodelibs-module@^0.2.0",
-      "net": "npm:jspm-nodelibs-net@^0.2.0",
-      "os": "npm:jspm-nodelibs-os@^0.2.0",
-      "path": "npm:jspm-nodelibs-path@^0.2.0",
-      "process": "npm:jspm-nodelibs-process@^0.2.0",
-      "react": "npm:react@^15.4.2",
-      "redux": "npm:redux@^3.6.0",
-      "rxjs": "npm:rxjs@^5.2.0",
-      "stream": "npm:jspm-nodelibs-stream@^0.2.0",
-      "string_decoder": "npm:jspm-nodelibs-string_decoder@^0.2.0",
-      "url": "npm:jspm-nodelibs-url@^0.2.0",
-      "util": "npm:jspm-nodelibs-util@^0.2.0",
-      "vm": "npm:jspm-nodelibs-vm@^0.2.0",
-      "zlib": "npm:jspm-nodelibs-zlib@^0.2.0"
-    },
-    "overrides": {
-      "github:socketio/socket.io-client@1.7.2": {
-        "main": "dist/socket.io.js"
-      },
-      "npm:browserify-zlib@0.1.4": {
-        "dependencies": {
-          "readable-stream": "^2.0.2",
-          "pako": "~0.2.0"
-        },
-        "map": {
-          "_stream_transform": "readable-stream/transform"
-        }
-      },
-      "npm:debug@2.6.3": {
-        "main": "src/browser.js",
-        "jspmNodeConversion": false,
-        "format": "cjs",
-        "map": {
-          "fs": "@empty",
-          "net": "@empty",
-          "tty": "@empty",
-          "util": "@empty"
-        }
-      },
-      "npm:inherits@2.0.3": {
-        "ignore": [
-          "test.js"
-        ]
-      },
-      "npm:lodash@4.17.4": {
-        "map": {
-          "buffer": "@empty",
-          "process": "@empty"
-        }
-      },
-      "npm:ms@0.7.2": {
-        "jspmNodeConversion": false,
-        "format": "cjs"
-      },
-      "npm:tslib@1.6.0": {
-        "format": "cjs"
-      },
-      "npm:typescript@2.2.1": {
-        "browser": {},
-        "map": {
-          "buffer": "@empty",
-          "child_process": "@empty",
-          "fs": "@empty",
-          "path": "@empty",
-          "process": "@empty",
-          "readline": "@empty"
-        },
-        "dependencies": {
-          "source-map-support": "*"
-        }
-      }
-    }
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$"
   }
 }

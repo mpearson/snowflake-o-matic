@@ -1,19 +1,16 @@
-import * as React from 'react';
-import classNames from 'classnames';
+import * as React from "react";
+import * as classNames from "classnames";
 
-// const inlineStyles = {};
-
-export function PageHeader({className = '', children = undefined}) {
-
-  const mainClass = classNames(
-    className.toString(),
-    'c-heading',
-    'u-centered',
+export const PageHeader: React.SFC<{className?: string}> = props => {
+  const classList = classNames(
+    props.className.toString(),
+    "c-heading",
+    "u-centered",
   );
 
   return (
-    <h2 className={mainClass}>
-      {children}
+    <h2 className={classList}>
+      {props.children}
     </h2>
   );
 }

@@ -1,6 +1,6 @@
-import * as React from 'react';
-import classNames from 'classnames';
-import { Link } from 'react-router';
+import * as React from "react";
+import * as classNames from "classnames";
+import { NavLink } from "react-router-dom";
 
 export const LayoutTopNav: React.SFC<{className?: string}> = props => {
   return (
@@ -18,18 +18,18 @@ export interface LayoutTopNavLinkProps {
 }
 
 export const LayoutTopNavLink: React.SFC<LayoutTopNavLinkProps> = props => {
-  const classList = classNames(props.className, 'c-nav__item', {
-    'c-nav__item--info': props.isPrimary,
-    'c-nav__item--right': props.isRight,
+  const classList = classNames(props.className, "c-nav__item", {
+    "c-nav__item--info": props.isPrimary,
+    "c-nav__item--right": props.isRight,
   });
   const activeClassList = classNames(
-    'c-nav__item--active',
+    "c-nav__item--active",
   );
 
   return (
-    <Link to={props.href} className={classList} activeClassName={activeClassList}>
+    <NavLink to={props.href} className={classList} activeClassName={activeClassList}>
       {props.children}
-    </Link>
+    </NavLink>
   );
 }
 

@@ -1,13 +1,13 @@
-import * as React from 'react';
-import classNames from 'classnames';
+import * as React from "react";
+import * as classNames from "classnames";
 
 
 export const LayoutFooter: React.SFC<{className?: string}> = props => {
 
   const classList = classNames(
     props.className,
-    'u-centered',
-    'u-letter-box--medium',
+    "u-centered",
+    "u-letter-box--medium",
   );
 
   return (

@@ -35,3 +35,8 @@ __snapshots__
 # Build directory
 dist
 temp
+
+# misc
+.DS_Store
+.env
+npm-debug.log
