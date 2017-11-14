@@ -74,9 +74,9 @@
   version "16.0.22"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-16.0.22.tgz#19ad106e124aceebd2b4d430a278d55413ee8759"
 
-"@types/three@^0.84.29":
-  version "0.84.29"
-  resolved "https://registry.yarnpkg.com/@types/three/-/three-0.84.29.tgz#3d6789f80dd334df6a6894fa1713711258e0683f"
+"@types/three@^0.84.30":
+  version "0.84.30"
+  resolved "https://registry.yarnpkg.com/@types/three/-/three-0.84.30.tgz#0c3478faf1db0cbb0b5014629f72599482a768b6"
   dependencies:
     "@types/webvr-api" "*"
 

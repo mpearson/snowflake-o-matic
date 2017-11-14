@@ -29,7 +29,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   private camera: THREE.Camera;
   private geometry: THREE.Geometry;
   private material: THREE.LineBasicMaterial;
-  private outline: THREE.Line;
+  private outline: THREE.LineLoop;
 
   constructor(props: SnowflakeEditorProps) {
     super(props);
@@ -59,7 +59,11 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.scene = scene;
     this.renderer = renderer;
 
-    this.count = 120;
+    this.count = 0;
+    this.points = [];
+    this.targets = [];
+
+
     this.shapeSize = 400;
 
     // const sphere = new THREE.Mesh(
@@ -72,24 +76,19 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     // // Finally, add the sphere to the scene.
     // scene.add(sphere);
 
-    this.points = [];
-    this.targets = [];
-    for (var i = 0; i < this.count; i++) {
-      this.points.push(new THREE.Vector3(0, 0, 0));
-      this.targets.push(new THREE.Vector3(0, 0, 0));
-    }
+
+    // for (var i = 0; i < this.count; i++) {
+    //   this.points.push(new THREE.Vector3(0, 0, 0));
+    //   this.targets.push(new THREE.Vector3(0, 0, 0));
+    // }
 
     // initialize 3D object
     this.geometry = new THREE.Geometry();
-    this.geometry.vertices = this.points;
+    // this.geometry.vertices = this.points;
     this.material = new THREE.LineBasicMaterial({color: 0xffffff});
     // this.outline = new THREE.Mesh(this.geometry, this.material);
-    this.outline = new THREE.Line(this.geometry, this.material);
-    this.outline.position.set(0, 0, 0);
-    this.outline.scale.set(1, 1, 1);
-    this.scene.add(this.outline);
 
-
+    this.regenerate = this.regenerate.bind(this);
     this.updateSimulation = this.updateSimulation.bind(this);
     this.renderFrame = this.renderFrame.bind(this);
     requestAnimationFrame(this.renderFrame);
@@ -115,7 +114,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   public render() {
     return (
       <div>
-        <button onClick={this.regenerate.bind(this)}>Regenerate</button>
+        <button onClick={this.regenerate}>Regenerate</button>
         <div id="webgl-wrapper" ref={elem => {
           this.container = elem;
           elem.appendChild(this.renderer.domElement);
@@ -123,6 +122,34 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
       </div>
     );
   }
+
+
+  private nucleate(sides: number) {
+    this.points.splice(0);
+    this.targets.splice(0);
+    this.count = sides;
+
+    const angleStep = Math.PI * 2 / sides;
+
+    for (var i = 0; i < sides; i++) {
+      const x = Math.cos(angleStep * i) * this.shapeSize * 0.5;
+      const y = Math.sin(angleStep * i) * this.shapeSize * 0.5;
+
+      this.points.push(new THREE.Vector3(x, y, 0));
+      this.targets.push(new THREE.Vector3(x, y, 0));
+    }
+
+    if (this.outline)
+      this.scene.remove(this.outline);
+
+    this.geometry = new THREE.Geometry();
+    this.geometry.vertices = this.points;
+    this.outline = new THREE.LineLoop(this.geometry, this.material);
+    this.outline.position.set(0, 0, 0);
+    this.outline.scale.set(1, 1, 1);
+    this.scene.add(this.outline);
+  }
+
 
   private updateSimulation() {
 
@@ -160,14 +187,14 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   }
 
   private regenerate() {
-    for (var i = 0; i < this.count; i++) {
-      var x = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
-      var y = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
+    this.nucleate(Math.round(3 + Math.random() * 9));
+    // for (var i = 0; i < this.count; i++) {
+    //   var x = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
+    //   var y = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
 
-      this.targets[i].x = x;
-      this.targets[i].y = y;
-    }
-
+    //   this.targets[i].x = x;
+    //   this.targets[i].y = y;
+    // }
   }
 
 }
