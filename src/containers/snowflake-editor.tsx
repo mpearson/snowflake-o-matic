@@ -63,8 +63,10 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.points = [];
     this.targets = [];
 
+    this.material = new THREE.LineBasicMaterial({color: 0xffffff});
+    this.shapeSize = 200;
+    this.nucleate(6,);
 
-    this.shapeSize = 400;
 
     // const sphere = new THREE.Mesh(
     //   new THREE.SphereGeometry(50, 32, 32), new THREE.MeshBasicMaterial({color: 0xffffff}));
@@ -82,10 +84,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     //   this.targets.push(new THREE.Vector3(0, 0, 0));
     // }
 
-    // initialize 3D object
-    this.geometry = new THREE.Geometry();
-    // this.geometry.vertices = this.points;
-    this.material = new THREE.LineBasicMaterial({color: 0xffffff});
+
     // this.outline = new THREE.Mesh(this.geometry, this.material);
 
     this.regenerate = this.regenerate.bind(this);
@@ -123,22 +122,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     );
   }
 
-
-  private nucleate(sides: number) {
-    this.points.splice(0);
-    this.targets.splice(0);
-    this.count = sides;
-
-    const angleStep = Math.PI * 2 / sides;
-
-    for (var i = 0; i < sides; i++) {
-      const x = Math.cos(angleStep * i) * this.shapeSize * 0.5;
-      const y = Math.sin(angleStep * i) * this.shapeSize * 0.5;
-
-      this.points.push(new THREE.Vector3(x, y, 0));
-      this.targets.push(new THREE.Vector3(x, y, 0));
-    }
-
+  private rebuild() {
     if (this.outline)
       this.scene.remove(this.outline);
 
@@ -148,6 +132,42 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.outline.position.set(0, 0, 0);
     this.outline.scale.set(1, 1, 1);
     this.scene.add(this.outline);
+  }
+
+  private nucleate(sides: number) {
+    this.points = [];
+    // this.targets = [];
+    this.count = sides;
+
+    const angleStep = Math.PI * 2 / sides;
+
+    for (var i = 0; i < sides; i++) {
+      // sin and cos swapped because we want it to start at the top
+      const x = Math.sin(angleStep * i) * this.shapeSize * 0.5;
+      const y = Math.cos(angleStep * i) * this.shapeSize * 0.5;
+
+      this.points.push(new THREE.Vector3(x, y, 0));
+      // this.targets.push(new THREE.Vector3(x, y, 0));
+    }
+
+    this.rebuild();
+  }
+
+
+
+  private subdivide(index: number, newVertCount: number = 1) {
+    const points = this.points;
+    const nextIndex = (index + 1) % points.length;
+    const step = (points[nextIndex].sub(points[index])).divideScalar(newVertCount + 1);
+    const newVerts = new Array<THREE.Vector3>(newVertCount);
+    let prev = points[index];
+    for (let i = 0; i < newVertCount; i++) {
+      prev = prev.add(step);
+      newVerts[i] = prev;
+    }
+    this.points = Array.prototype.concat(points.slice(0, index), newVerts, points.slice(index));
+
+    this.rebuild();
   }
 
 
@@ -163,6 +183,8 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     }
 
     this.geometry.verticesNeedUpdate = true;
+    this.geometry.computeVertexNormals();
+    // this.geometry.norm
 
     // render shape
 
@@ -187,7 +209,8 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   }
 
   private regenerate() {
-    this.nucleate(Math.round(3 + Math.random() * 9));
+    // this.nucleate(Math.round(3 + Math.random() * 9));
+    this.nucleate(6);
     // for (var i = 0; i < this.count; i++) {
     //   var x = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
     //   var y = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
