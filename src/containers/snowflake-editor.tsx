@@ -28,6 +28,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   private scene: THREE.Scene;
   private camera: THREE.Camera;
   private geometry: THREE.Geometry;
+  private vertexDots: THREE.Points;
   private material: THREE.LineBasicMaterial;
   private outline: THREE.LineLoop;
 
@@ -63,7 +64,12 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.points = [];
     this.targets = [];
 
-    this.material = new THREE.LineBasicMaterial({color: 0xffffff});
+    this.material = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      opacity: 0.5,
+      alphaTest: 0.4,
+      transparent: true,
+    });
     this.shapeSize = 200;
     this.nucleate(6,);
 
@@ -102,7 +108,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   }
 
   public componentDidMount() {
-    this.updateTimer = window.setInterval(this.updateSimulation, 20);
+    // this.updateTimer = window.setInterval(this.updateSimulation, 20);
   }
 
   public componentWillUnmount() {
@@ -122,9 +128,12 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     );
   }
 
-  private rebuild() {
+  // private createGeometry(points: THREE.Vector3[]): THREE.Geometry {
+  private createGeometry() {
     if (this.outline)
       this.scene.remove(this.outline);
+    if (this.vertexDots)
+      this.scene.remove(this.vertexDots);
 
     this.geometry = new THREE.Geometry();
     this.geometry.vertices = this.points;
@@ -132,6 +141,19 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.outline.position.set(0, 0, 0);
     this.outline.scale.set(1, 1, 1);
     this.scene.add(this.outline);
+
+
+    const material = new THREE.PointsMaterial({
+      size: 5,
+      // opacity: 0.4,
+      // alphaTest: 0.4,
+      // transparent: true
+    });
+
+    // make the point cloud happen
+    this.vertexDots = new THREE.Points(this.geometry, material);
+
+    this.scene.add(this.vertexDots);
   }
 
   private nucleate(sides: number) {
@@ -150,7 +172,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
       // this.targets.push(new THREE.Vector3(x, y, 0));
     }
 
-    this.rebuild();
+    this.createGeometry();
   }
 
 
@@ -167,7 +189,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     }
     this.points = Array.prototype.concat(points.slice(0, index), newVerts, points.slice(index));
 
-    this.rebuild();
+    this.createGeometry();
   }
 
 
