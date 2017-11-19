@@ -1,17 +1,17 @@
 import * as THREE from "three";
 
-
-
 export interface Procedural2DOptions {
-  showVertices: boolean;
-  vertexCount: number;
-  verticesUsed: number;
+  showVertexDots: boolean;
+  initialVertices: number;
+  maxVerts: number;
 }
 
 export class ProceduralGeometry2D {
   public options: Procedural2DOptions;
   public geometry: THREE.BufferGeometry;
   public vertices: Float32Array;
+  public vertCount: number;
+  private positionAttr: THREE.BufferAttribute;
 
   public outline: THREE.LineLoop;
   public outlineMaterial: THREE.LineBasicMaterial;
@@ -20,17 +20,19 @@ export class ProceduralGeometry2D {
   public vertexDotMaterial: THREE.PointsMaterial;
 
   constructor(options: Partial<Procedural2DOptions>) {
-    const o = this.options = {
-      showVertices: true,
-      vertexCount: 9000,
-      verticesUsed: 0,
+    this.options = {
+      showVertexDots: true,
+      initialVertices: 0,
+      maxVerts: 9000,
       ...options,
     };
 
-    const vertices = this.vertices = new Float32Array(o.vertexCount * 3);
-    const geometry = this.geometry = new THREE.BufferGeometry();
-    geometry.addAttribute("position", new THREE.BufferAttribute(vertices, 3));
-    geometry.setDrawRange(0, o.verticesUsed);
+    this.vertCount = this.options.initialVertices;
+    this.vertices = new Float32Array(this.options.maxVerts * 3);
+    this.geometry = new THREE.BufferGeometry();
+    this.positionAttr = new THREE.BufferAttribute(this.vertices, 3);
+    this.geometry.addAttribute("position", this.positionAttr);
+    this.geometry.setDrawRange(0, this.vertCount);
 
     this.outlineMaterial = new THREE.LineBasicMaterial({
       color: 0xffffff,
@@ -53,22 +55,36 @@ export class ProceduralGeometry2D {
     this.outline.scale.set(1, 1, 1);
   }
 
+  public subdivide(vert: number, newVerts: number = 1) {
+    const { vertices, vertCount } = this;
+    const { maxVerts } = this.options;
 
+    if (vertCount + newVerts >= maxVerts )
+      throw new Error(`unable to subdivide! Already using ${vertCount} / ${maxVerts} verts.`);
 
-  // private subdivide(index: number, newVertCount: number = 1) {
-  //   const points = this.points;
-  //   const nextIndex = (index + 1) % points.length;
-  //   const step = (points[nextIndex].sub(points[index])).divideScalar(newVertCount + 1);
-  //   const newVerts = new Array<THREE.Vector3>(newVertCount);
-  //   let prev = points[index];
-  //   for (let i = 0; i < newVertCount; i++) {
-  //     prev = prev.add(step);
-  //     newVerts[i] = prev;
-  //   }
-  //   this.points = Array.prototype.concat(points.slice(0, index), newVerts, points.slice(index));
+    // calculate the delta between this vert and the next
+    const nextVert = (vert + 1) % vertCount;
+    const vertOffset = vert * 3;
+    const nextVertOffset = nextVert * 3;
+    const factor = 1 / (newVerts + 1);
+    const dx = (vertices[nextVertOffset] - vertices[vertOffset]) * factor;
+    const dy = (vertices[nextVertOffset + 1] - vertices[vertOffset + 1]) * factor;
+    const dz = (vertices[nextVertOffset + 2] - vertices[vertOffset + 2]) * factor;
 
-  //   this.createGeometry();
-  // }
+    // shift all the vertices ahead to make room for the new ones
+    const target = (vert + newVerts + 1) * 3;
+    vertices.copyWithin(target, nextVertOffset, vertCount * 3);
+
+    for (let offset = vertOffset; offset < target; offset += 3) {
+      vertices[offset + 3] = vertices[offset] + dx;
+      vertices[offset + 4] = vertices[offset + 1] + dy;
+      vertices[offset + 5] = 0; // this is a 2D geometry, ignore Z
+    }
+
+    this.vertCount += newVerts;
+    this.geometry.setDrawRange(0, this.vertCount);
+    this.positionAttr.needsUpdate = true;
+  }
 
 
 }

@@ -7,7 +7,8 @@ const OrbitControls = require("three-orbitcontrols");
 
 import * as _ from "lodash";
 
-import {ProceduralGeometry2D} from "../models/procedural2D";
+import { SnowflakeControls, ButtonProps, SliderProps } from "../components/snowflake-controls";
+import { ProceduralGeometry2D } from "../models/procedural2D";
 import { ChangeEvent } from 'react';
 
 // import Snowflake
@@ -22,7 +23,10 @@ export interface SnowflakeEditorState {
   size: number;
 }
 
-
+const defaultState: SnowflakeEditorState = {
+  symmetry: 6,
+  size: 200,
+}
 
 export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, SnowflakeEditorState> {
   private container: HTMLDivElement;
@@ -37,17 +41,14 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
-  private controls: THREE.OrbitControls;
+  private orbitControls: THREE.OrbitControls;
   // private light: THREE.PointLight;
 
   private snowflake: ProceduralGeometry2D;
 
   constructor(props: SnowflakeEditorProps) {
     super(props);
-    this.state = {
-      symmetry: 6,
-      size: 200,
-    }
+    this.state = {...defaultState};
 
     this.width = 800;
     this.height = 600;
@@ -70,21 +71,20 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.width, this.height);
 
-    // controls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.enableRotate = true;
-    this.controls.enablePan = false;
-    this.controls.enableZoom = true;
-    this.controls.minDistance = 400;
-    this.controls.maxDistance = 600;
-    this.controls.minAzimuthAngle = Math.PI * -0.35;
-    this.controls.maxAzimuthAngle = Math.PI * 0.35;
-    this.controls.minPolarAngle = Math.PI * 0.15;
-    this.controls.maxPolarAngle = Math.PI * 0.85;
-    this.controls.rotateSpeed = 0.25;
-    this.controls.dampingFactor = 0.2;
-
+    // orbit controls
+    this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.orbitControls.enableDamping = true;
+    this.orbitControls.enableRotate = true;
+    this.orbitControls.enablePan = false;
+    this.orbitControls.enableZoom = true;
+    this.orbitControls.minDistance = 400;
+    this.orbitControls.maxDistance = 600;
+    this.orbitControls.minAzimuthAngle = Math.PI * -0.35;
+    this.orbitControls.maxAzimuthAngle = Math.PI * 0.35;
+    this.orbitControls.minPolarAngle = Math.PI * 0.15;
+    this.orbitControls.maxPolarAngle = Math.PI * 0.85;
+    this.orbitControls.rotateSpeed = 0.25;
+    this.orbitControls.dampingFactor = 0.2;
 
     // action!
     this.regenerate();
@@ -96,7 +96,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   }
 
   private renderFrame () {
-    this.controls.update();
+    this.orbitControls.update();
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.renderFrame);
   }
@@ -117,20 +117,22 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   public render() {
     const { symmetry, size } = this.state;
 
+    const buttons: ButtonProps[] = [
+      { label: "Reset", onClick: () => {
+        this.orbitControls.reset();
+        this.setState({...defaultState});
+      } },
+      // { label: "Regenerate", onClick: this.regenerate.bind(this) },
+      { label: "Subdivide", onClick: this.subdivide.bind(this) },
+    ];
+    const controls: SliderProps[] = [
+      { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.setState({symmetry: x}) },
+      { label: "Size", value: size, min: 10, max: 200, onChange: x => this.setState({size: x}) },
+    ];
+
     return (
       <div>
-        <button onClick={this.regenerate}>Regenerate</button>
-        <input
-          type="range"
-          min="3"
-          max="12"
-          value={symmetry}
-          onChange={event => {
-            this.setState({ symmetry: parseInt(event.target.value, 10) });
-            // this.regenerate();
-          }}
-        />
-        <span>{symmetry}</span>
+        <SnowflakeControls buttons={buttons} controls={controls} />
         <div id="webgl-wrapper" ref={elem => {
           if (elem !== null) {
             this.container = elem;
@@ -143,8 +145,8 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
   private nucleate(sides: number, shapeSize: number): ProceduralGeometry2D {
     const snowflake = new ProceduralGeometry2D({
-      vertexCount: 9000,
-      verticesUsed: sides,
+      maxVerts: 9000,
+      initialVertices: sides,
     });
 
     const verts = snowflake.vertices;
@@ -207,16 +209,25 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   }
  */
   private regenerate() {
-    const { scene } = this;
-    if (this.snowflake) {
-      scene.remove(this.snowflake.outline);
-      scene.remove(this.snowflake.vertexDots);
+    let { scene, snowflake } = this;
+    if (snowflake) {
+      scene.remove(snowflake.outline);
+      scene.remove(snowflake.vertexDots);
+      snowflake.geometry.dispose();
     }
 
-    this.snowflake = this.nucleate(this.state.symmetry, this.state.size);
+    this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size);
     // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
-    scene.add(this.snowflake.outline);
-    scene.add(this.snowflake.vertexDots);
+    scene.add(snowflake.outline);
+    scene.add(snowflake.vertexDots);
+  }
+
+  private subdivide() {
+    const { snowflake } = this;
+    if (snowflake) {
+      snowflake.subdivide(0, 1);
+
+    }
   }
 
 }
