@@ -5,6 +5,8 @@ import * as React from 'react';
 import * as THREE from "three";
 import * as _ from "lodash";
 
+import {ProceduralGeometry2D} from "../models/procedural2D";
+
 // import Snowflake
 
 
@@ -16,21 +18,24 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
   private container: HTMLDivElement;
   private updateTimer: number;
   private updateInterval = 20;
-  private count: number;
-  private shapeSize: number;
-  private points: THREE.Vector3[];
-  private targets: THREE.Vector3[];
 
+  // camera and rendering
   private width: number;
   private height: number;
-
   private renderer: THREE.Renderer;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
-  private geometry: THREE.Geometry;
-  private vertexDots: THREE.Points;
-  private material: THREE.LineBasicMaterial;
-  private outline: THREE.LineLoop;
+
+  private snowflake: ProceduralGeometry2D;
+
+  // private count: number;
+  // private shapeSize: number;
+  // private points: THREE.Vector3[];
+  // private targets: THREE.Vector3[];
+  // private geometry: THREE.Geometry;
+  // private vertexDots: THREE.Points;
+  // private material: THREE.LineBasicMaterial;
+  // private outline: THREE.LineLoop;
 
   constructor(props: SnowflakeEditorProps) {
     super(props);
@@ -60,18 +65,19 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     this.scene = scene;
     this.renderer = renderer;
 
-    this.count = 0;
-    this.points = [];
-    this.targets = [];
 
-    this.material = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      opacity: 0.5,
-      alphaTest: 0.4,
-      transparent: true,
-    });
-    this.shapeSize = 200;
-    this.nucleate(6,);
+    // this.count = 0;
+    // this.points = [];
+    // this.targets = [];
+
+    // this.material = new THREE.LineBasicMaterial({
+    //   color: 0xffffff,
+    //   opacity: 0.5,
+    //   alphaTest: 0.4,
+    //   transparent: true,
+    // });
+    // this.shapeSize = 200;
+    this.snowflake = this.nucleate(6, 200);
 
 
     // const sphere = new THREE.Mesh(
@@ -94,7 +100,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     // this.outline = new THREE.Mesh(this.geometry, this.material);
 
     this.regenerate = this.regenerate.bind(this);
-    this.updateSimulation = this.updateSimulation.bind(this);
+    // this.updateSimulation = this.updateSimulation.bind(this);
     this.renderFrame = this.renderFrame.bind(this);
     requestAnimationFrame(this.renderFrame);
   }
@@ -128,70 +134,40 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
     );
   }
 
-  // private createGeometry(points: THREE.Vector3[]): THREE.Geometry {
-  private createGeometry() {
-    if (this.outline)
-      this.scene.remove(this.outline);
-    if (this.vertexDots)
-      this.scene.remove(this.vertexDots);
 
-    this.geometry = new THREE.Geometry();
-    this.geometry.vertices = this.points;
-    this.outline = new THREE.LineLoop(this.geometry, this.material);
-    this.outline.position.set(0, 0, 0);
-    this.outline.scale.set(1, 1, 1);
-    this.scene.add(this.outline);
+    // this.scene.add(this.vertexDots);
 
+  private nucleate(sides: number, shapeSize: number): ProceduralGeometry2D {
 
-    const material = new THREE.PointsMaterial({
-      size: 5,
-      // opacity: 0.4,
-      // alphaTest: 0.4,
-      // transparent: true
+    const snowflake = new ProceduralGeometry2D({
+      vertexCount: 9000,
+      verticesUsed: 6,
     });
 
-    // make the point cloud happen
-    this.vertexDots = new THREE.Points(this.geometry, material);
 
-    this.scene.add(this.vertexDots);
-  }
-
-  private nucleate(sides: number) {
-    this.points = [];
-    // this.targets = [];
-    this.count = sides;
+    const verts = snowflake.vertices;
 
     const angleStep = Math.PI * 2 / sides;
 
-    for (var i = 0; i < sides; i++) {
+    for (let i = 0, xIndex = 0, yIndex = 1, zIndex = 2; i < sides; i++, xIndex += 3, yIndex += 3, zIndex += 3) {
+
+
       // sin and cos swapped because we want it to start at the top
-      const x = Math.sin(angleStep * i) * this.shapeSize * 0.5;
-      const y = Math.cos(angleStep * i) * this.shapeSize * 0.5;
+      const x = Math.sin(angleStep * i) * shapeSize * 0.5;
+      const y = Math.cos(angleStep * i) * shapeSize * 0.5;
 
-      this.points.push(new THREE.Vector3(x, y, 0));
-      // this.targets.push(new THREE.Vector3(x, y, 0));
+      verts[xIndex] = x;
+      verts[yIndex] = y;
+      verts[zIndex] = 0;
     }
 
-    this.createGeometry();
+    // this.createGeometry();
+
+    return snowflake;
   }
 
 
-
-  private subdivide(index: number, newVertCount: number = 1) {
-    const points = this.points;
-    const nextIndex = (index + 1) % points.length;
-    const step = (points[nextIndex].sub(points[index])).divideScalar(newVertCount + 1);
-    const newVerts = new Array<THREE.Vector3>(newVertCount);
-    let prev = points[index];
-    for (let i = 0; i < newVertCount; i++) {
-      prev = prev.add(step);
-      newVerts[i] = prev;
-    }
-    this.points = Array.prototype.concat(points.slice(0, index), newVerts, points.slice(index));
-
-    this.createGeometry();
-  }
-
+/*
 
   private updateSimulation() {
 
@@ -229,10 +205,18 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps> {
 
     // addShape(roundedRectShape, extrudeSettings, 0x008000, -150, 150, 0, 0, 0, 0, 1);
   }
-
+ */
   private regenerate() {
     // this.nucleate(Math.round(3 + Math.random() * 9));
-    this.nucleate(6);
+    let { scene, snowflake } = this;
+    if (snowflake) {
+      scene.remove(snowflake.outline);
+      scene.remove(snowflake.vertexDots);
+    }
+
+    this.snowflake = snowflake = this.nucleate(6, 200);
+    scene.add(snowflake.outline);
+    scene.add(snowflake.vertexDots);
     // for (var i = 0; i < this.count; i++) {
     //   var x = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
     //   var y = Math.random() * this.shapeSize - (0.5 * this.shapeSize);
