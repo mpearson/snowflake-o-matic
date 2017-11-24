@@ -1,4 +1,4 @@
-import "./main-layout.css";
+import "./main-layout.less";
 import * as React from "react";
 import { LayoutTopNav, LayoutTopNavLink } from "./components/layout-top-nav";
 import { LayoutHeader } from "./components/layout-header";
@@ -13,7 +13,7 @@ export class MainLayout extends React.Component<{}, {}> {
       <div className="c-text">
         <LayoutHeader>
           <LayoutTopNav>
-            <LayoutTopNavLink href="/" isPrimary> Snowflake-O-Matic </LayoutTopNavLink>
+            <LayoutTopNavLink href="/" isPrimary className="nav-link"> Snowflake-O-Matic </LayoutTopNavLink>
           </LayoutTopNav>
         </LayoutHeader>
 

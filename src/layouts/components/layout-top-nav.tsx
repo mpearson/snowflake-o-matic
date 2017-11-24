@@ -31,7 +31,7 @@ export const LayoutTopNavLink: React.SFC<LayoutTopNavLinkProps> = props => {
       {props.children}
     </NavLink>
   );
-}
+};
 
 LayoutTopNavLink.defaultProps = {
   className: "",

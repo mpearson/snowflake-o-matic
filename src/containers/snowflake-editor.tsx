@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 // import { Link } from 'react-router';
 // import { PageSection } from '../../components/page-section';
 // import { PageHero } from '../../components/page-hero';
@@ -9,7 +9,7 @@ import * as _ from "lodash";
 
 import { SnowflakeControls, ButtonProps, SliderProps } from "../components/snowflake-controls";
 import { ProceduralGeometry2D } from "../models/procedural2D";
-import { ChangeEvent } from 'react';
+import { ChangeEvent } from "react";
 
 // import Snowflake
 
@@ -77,7 +77,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.orbitControls.enableRotate = true;
     this.orbitControls.enablePan = false;
     this.orbitControls.enableZoom = true;
-    this.orbitControls.minDistance = 400;
+    this.orbitControls.minDistance = 200;
     this.orbitControls.maxDistance = 600;
     this.orbitControls.minAzimuthAngle = Math.PI * -0.35;
     this.orbitControls.maxAzimuthAngle = Math.PI * 0.35;
@@ -116,6 +116,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
   public render() {
     const { symmetry, size } = this.state;
+    (window as any).snowflake = this.snowflake;
 
     const buttons: ButtonProps[] = [
       { label: "Reset", onClick: () => {
@@ -150,24 +151,42 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     });
 
     const verts = snowflake.vertices;
-
     const angleStep = Math.PI * 2 / sides;
 
     for (let i = 0, xIndex = 0; i < sides; i++, xIndex += 3) {
       // sin and cos swapped because we want it to start at the top
       const x = Math.sin(angleStep * i) * shapeSize * 0.5;
       const y = Math.cos(angleStep * i) * shapeSize * 0.5;
-
       verts[xIndex] = x;
       verts[xIndex + 1] = y;
       verts[xIndex + 2] = 0;
     }
-
-    // this.createGeometry();
-
     return snowflake;
   }
 
+  private regenerate() {
+    let { scene, snowflake } = this;
+    if (snowflake) {
+      scene.remove(snowflake.outline);
+      scene.remove(snowflake.vertexDots);
+      snowflake.geometry.dispose();
+    }
+
+    this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size);
+    (window as any).snowflake = snowflake;
+    // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
+    scene.add(snowflake.outline);
+    scene.add(snowflake.vertexDots);
+  }
+
+  private subdivide() {
+    const { snowflake } = this;
+    if (snowflake) {
+      const verts = _.range(snowflake.vertCount);
+      console.log(verts);
+      snowflake.subdivide(verts, 1);
+    }
+  }
 
 /*
 
@@ -208,31 +227,4 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     // addShape(roundedRectShape, extrudeSettings, 0x008000, -150, 150, 0, 0, 0, 0, 1);
   }
  */
-  private regenerate() {
-    let { scene, snowflake } = this;
-    if (snowflake) {
-      scene.remove(snowflake.outline);
-      scene.remove(snowflake.vertexDots);
-      snowflake.geometry.dispose();
-    }
-
-    this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size);
-    // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
-    scene.add(snowflake.outline);
-    scene.add(snowflake.vertexDots);
-  }
-
-  private subdivide() {
-    const { snowflake } = this;
-    if (snowflake) {
-      snowflake.subdivide(0, 1);
-
-    }
-  }
-
 }
-
-
-
-
-// document.getElementById("regenerate-button").addEventListener("click", regenerate);
