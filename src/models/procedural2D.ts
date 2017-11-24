@@ -55,7 +55,7 @@ export class ProceduralGeometry2D {
     this.outline.scale.set(1, 1, 1);
   }
 
-  private printAngles(verts: Float32Array) {
+  public printAngles(verts: Float32Array) {
     if (typeof verts === "undefined")
       verts = this.vertices.slice(0, this.vertCount * 3);
     const rad2deg = 180 / Math.PI;
@@ -66,7 +66,14 @@ export class ProceduralGeometry2D {
     console.log(angles);
   }
 
-  public subdivide(verts: number[], steps: number = 1) {
+  public printVerts(verts: Float32Array) {
+    const entries: string[] = [];
+    for (let i = 0; i < verts.length; i += 3)
+      entries.push(`[${Math.round(verts[i])},${Math.round(verts[i + 1])}]`);
+    console.log(entries.join(" "));
+  }
+
+  public subdivide(verts: Int32Array, steps: number = 1) {
     const { vertices, vertCount } = this;
     const { maxVerts } = this.options;
 
@@ -78,7 +85,6 @@ export class ProceduralGeometry2D {
 
     const factor = 1 / (steps + 1);
 
-    // this.printAngles(vertices.slice(0, vertCount * 3));
     // to avoid copying anything more than once,
     // we work backwards from the end of the list of verts
     verts.sort();
@@ -87,42 +93,44 @@ export class ProceduralGeometry2D {
     for (let i = lastVertIndex; i >= 0; i--) {
       const vert = verts[i];
       const nextVert = (vert + 1) % vertCount; // the vertex immediately after this one (loops around)
+      const vertOffsetX = vert * 3;
+      const vertOffsetY = vertOffsetX + 1;
+      const vertOffsetZ = vertOffsetX + 2;
 
       // unless this is the last vertex in the shape, we need to move all the
       // subsequent vertices to make room for the new ones we're creating
       // except not all of them, just up to the next vertex we're subdividing at
       if (i < vertCount - 1) {
-        const copyStart = (vert + 1) * 3;
-        const dest = copyStart + (steps * (i + 1) * 3);
+        const copyStart = vert + 1;
+        const dest = copyStart + (steps * (i + 1));
+
         let copyEnd: number;
         if (i === lastVertIndex)
-          copyEnd = vertCount * 3;
+          copyEnd = vertCount;
         else
-          copyEnd = (verts[i + 1] + 1) * 3;
-        // console.log(`copying from [${copyStart / 3}, ${copyEnd / 3}] to ${dest / 3}`);
-        vertices.copyWithin(dest, copyStart, copyEnd);
+          copyEnd = verts[i + 1] + 1;
+        vertices.copyWithin(dest * 3, copyStart * 3, copyEnd * 3);
       }
-      // this.printAngles(vertices.slice(0, (this.vertCount + steps * verts.length) * 3));
 
-      // calculate the delta between this vert and the next
-      const vertOffset = vert * 3;
+      // calculate the vector between this vert (A) and the next (B)
       let nextVertOffset = nextVert * 3;
-      const dx = (vertices[nextVertOffset++] - vertices[vertOffset]) * factor;
-      const dy = (vertices[nextVertOffset++] - vertices[vertOffset + 1]) * factor;
-      const dz = (vertices[nextVertOffset++] - vertices[vertOffset + 2]) * factor;
-      // console.log(`delta: (${dx}, ${dy}, ${dz})`);
+      const stepX = (vertices[nextVertOffset++] - vertices[vertOffsetX]) * factor;
+      const stepY = (vertices[nextVertOffset++] - vertices[vertOffsetY]) * factor;
+      const stepZ = (vertices[nextVertOffset++] - vertices[vertOffsetZ]) * factor;
 
-      // now add the new subdivision verts
+      // now add new subdivision verts at even intervals between (A) and (B)
+      let dx = 0, dy = 0, dz = 0;
       let newVertOffset = (vert + 1 + (steps * i)) * 3;
-      for (let step = 1; step <= steps; step++) {
-        vertices[newVertOffset++] = vertices[vertOffset] + (dx * step);
-        vertices[newVertOffset++] = vertices[vertOffset + 1] + (dy * step);
-        vertices[newVertOffset++] = vertices[vertOffset + 2] + (dz * step);
+      for (let step = 0; step < steps; step++) {
+        vertices[newVertOffset++] = vertices[vertOffsetX] + (dx += stepX);
+        vertices[newVertOffset++] = vertices[vertOffsetY] + (dy += stepY);
+        vertices[newVertOffset++] = vertices[vertOffsetZ] + (dz += stepZ);
       }
     }
-    // console.log(`vertCount: ${this.vertCount} + ${steps * verts.length}`);
+
     this.vertCount += steps * verts.length;
-    // this.printAngles(vertices.slice(0, this.vertCount * 3));
+    this.printAngles(vertices.slice(0, this.vertCount * 3));
+    this.printVerts(vertices.slice(0, (this.vertCount + 1) * 3));
     this.geometry.setDrawRange(0, this.vertCount);
     this.positionAttr.needsUpdate = true;
   }

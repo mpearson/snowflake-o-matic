@@ -21,12 +21,14 @@ export interface SnowflakeEditorProps {
 export interface SnowflakeEditorState {
   symmetry: number;
   size: number;
+  subdivisions: number;
 }
 
 const defaultState: SnowflakeEditorState = {
   symmetry: 6,
   size: 200,
-}
+  subdivisions: 1,
+};
 
 export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, SnowflakeEditorState> {
   private container: HTMLDivElement;
@@ -110,12 +112,20 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.updateTimer = null;
   }
 
+  private needsRegenerate: boolean = true;
+
+  public shouldComponentUpdate(nextProps: SnowflakeEditorProps, nextState: SnowflakeEditorState) {
+    this.needsRegenerate = nextState.size !== this.state.size || nextState.symmetry !== this.state.symmetry;
+    return true;
+  }
+
   public componentDidUpdate() {
-    this.regenerate();
+    if (this.needsRegenerate)
+      this.regenerate();
   }
 
   public render() {
-    const { symmetry, size } = this.state;
+    const { symmetry, size, subdivisions } = this.state;
     (window as any).snowflake = this.snowflake;
 
     const buttons: ButtonProps[] = [
@@ -129,6 +139,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const controls: SliderProps[] = [
       { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.setState({symmetry: x}) },
       { label: "Size", value: size, min: 10, max: 200, onChange: x => this.setState({size: x}) },
+      { label: "Subdivisions", value: subdivisions, min: 1, max: 4, onChange: x => this.setState({subdivisions: x}) },
     ];
 
     return (
@@ -183,8 +194,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const { snowflake } = this;
     if (snowflake) {
       const verts = _.range(snowflake.vertCount);
-      console.log(verts);
-      snowflake.subdivide(verts, 1);
+      snowflake.subdivide(new Int32Array(verts), this.state.subdivisions);
     }
   }
 
