@@ -80,8 +80,11 @@ export class ProceduralGeometry2D {
     if (verts.length === 0)
       throw new Error("ya'll need to specify at least one vertex, dingus!");
 
-    if (vertCount + steps >= maxVerts )
-      throw new Error(`unable to subdivide! Already using ${vertCount} / ${maxVerts} verts.`);
+    const newVertCount = verts.length * steps;
+    if (vertCount + newVertCount >= maxVerts ) {
+      throw new Error(`Error: subdivision creates ${newVertCount} new verts, but only ` +
+      `${maxVerts - vertCount} / ${maxVerts} verts are free.`);
+    }
 
     const factor = 1 / (steps + 1);
 
@@ -129,8 +132,8 @@ export class ProceduralGeometry2D {
     }
 
     this.vertCount += steps * verts.length;
-    this.printAngles(vertices.slice(0, this.vertCount * 3));
-    this.printVerts(vertices.slice(0, (this.vertCount + 1) * 3));
+    // this.printAngles(vertices.slice(0, this.vertCount * 3));
+    // this.printVerts(vertices.slice(0, (this.vertCount + 1) * 3));
     this.geometry.setDrawRange(0, this.vertCount);
     this.positionAttr.needsUpdate = true;
   }

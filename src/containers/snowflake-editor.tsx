@@ -114,15 +114,18 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
   private needsRegenerate: boolean = true;
 
-  public shouldComponentUpdate(nextProps: SnowflakeEditorProps, nextState: SnowflakeEditorState) {
-    this.needsRegenerate = nextState.size !== this.state.size || nextState.symmetry !== this.state.symmetry;
-    return true;
-  }
-
   public componentDidUpdate() {
     if (this.needsRegenerate)
       this.regenerate();
+    this.needsRegenerate = false;
   }
+
+  private update(field: any, value: any) {
+    if (field !== "subdivisions")
+      this.needsRegenerate = true;
+    this.setState({[field]: value});
+  }
+
 
   public render() {
     const { symmetry, size, subdivisions } = this.state;
@@ -131,15 +134,16 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const buttons: ButtonProps[] = [
       { label: "Reset", onClick: () => {
         this.orbitControls.reset();
+        this.needsRegenerate = true;
         this.setState({...defaultState});
       } },
       // { label: "Regenerate", onClick: this.regenerate.bind(this) },
       { label: "Subdivide", onClick: this.subdivide.bind(this) },
     ];
     const controls: SliderProps[] = [
-      { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.setState({symmetry: x}) },
-      { label: "Size", value: size, min: 10, max: 200, onChange: x => this.setState({size: x}) },
-      { label: "Subdivisions", value: subdivisions, min: 1, max: 4, onChange: x => this.setState({subdivisions: x}) },
+      { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.update("symmetry", x) },
+      { label: "Size", value: size, min: 10, max: 200, onChange: x => this.update("size", x) },
+      { label: "Subdivisions", value: subdivisions, min: 1, max: 16, onChange: x => this.update("subdivisions", x) },
     ];
 
     return (
@@ -157,7 +161,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
   private nucleate(sides: number, shapeSize: number): ProceduralGeometry2D {
     const snowflake = new ProceduralGeometry2D({
-      maxVerts: 9000,
+      maxVerts: 65536,
       initialVertices: sides,
     });
 
