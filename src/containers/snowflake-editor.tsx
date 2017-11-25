@@ -198,7 +198,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const { snowflake } = this;
     if (snowflake) {
       const verts = _.range(snowflake.vertCount);
-      snowflake.subdivide(new Int32Array(verts), this.state.subdivisions);
+      snowflake.subdivide(verts, this.state.subdivisions);
     }
   }
 

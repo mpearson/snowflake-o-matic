@@ -73,7 +73,7 @@ export class ProceduralGeometry2D {
     console.log(entries.join(" "));
   }
 
-  public subdivide(verts: Int32Array, steps: number = 1) {
+  public subdivide(verts: number[], steps: number = 1) {
     const { vertices, vertCount } = this;
     const { maxVerts } = this.options;
 
@@ -90,7 +90,7 @@ export class ProceduralGeometry2D {
 
     // to avoid copying anything more than once,
     // we work backwards from the end of the list of verts
-    verts.sort();
+    verts.sort((a, b) => a - b);
 
     const lastVertIndex = verts.length - 1;
     for (let i = lastVertIndex; i >= 0; i--) {
