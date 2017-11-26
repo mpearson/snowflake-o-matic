@@ -10,8 +10,10 @@ export class ProceduralGeometry2D {
   public options: Procedural2DOptions;
   public geometry: THREE.BufferGeometry;
   public vertices: Float32Array;
+  public normals: Float32Array;
   public vertCount: number;
   private positionAttr: THREE.BufferAttribute;
+  private normalAttr: THREE.BufferAttribute;
 
   public outline: THREE.LineLoop;
   public outlineMaterial: THREE.LineBasicMaterial;
@@ -29,9 +31,12 @@ export class ProceduralGeometry2D {
 
     this.vertCount = this.options.initialVertices;
     this.vertices = new Float32Array(this.options.maxVerts * 3);
+    this.normals = new Float32Array(this.options.maxVerts * 3);
     this.geometry = new THREE.BufferGeometry();
     this.positionAttr = new THREE.BufferAttribute(this.vertices, 3);
+    this.normalAttr = new THREE.BufferAttribute(this.normals, 3);
     this.geometry.addAttribute("position", this.positionAttr);
+    this.geometry.addAttribute("normal", this.normalAttr);
     this.geometry.setDrawRange(0, this.vertCount);
 
     this.outlineMaterial = new THREE.LineBasicMaterial({
@@ -86,7 +91,7 @@ export class ProceduralGeometry2D {
       `${maxVerts - vertCount} / ${maxVerts} verts are free.`);
     }
 
-    const factor = 1 / (steps + 1);
+    const stepFactor = 1 / (steps + 1);
 
     // to avoid copying anything more than once,
     // we work backwards from the end of the list of verts
@@ -117,9 +122,9 @@ export class ProceduralGeometry2D {
 
       // calculate the vector between this vert (A) and the next (B)
       let nextVertOffset = nextVert * 3;
-      const stepX = (vertices[nextVertOffset++] - vertices[vertOffsetX]) * factor;
-      const stepY = (vertices[nextVertOffset++] - vertices[vertOffsetY]) * factor;
-      const stepZ = (vertices[nextVertOffset++] - vertices[vertOffsetZ]) * factor;
+      const stepX = (vertices[nextVertOffset++] - vertices[vertOffsetX]) * stepFactor;
+      const stepY = (vertices[nextVertOffset++] - vertices[vertOffsetY]) * stepFactor;
+      const stepZ = (vertices[nextVertOffset++] - vertices[vertOffsetZ]) * stepFactor;
 
       // now add new subdivision verts at even intervals between (A) and (B)
       let dx = 0, dy = 0, dz = 0;
@@ -132,41 +137,41 @@ export class ProceduralGeometry2D {
     }
 
     this.vertCount += steps * verts.length;
-    // this.printAngles(vertices.slice(0, this.vertCount * 3));
-    // this.printVerts(vertices.slice(0, (this.vertCount + 1) * 3));
     this.geometry.setDrawRange(0, this.vertCount);
     this.positionAttr.needsUpdate = true;
+
+    this.calculateNormals();
   }
 
-  public subdivideFace(vert: number, newVerts: number = 1) {
-    const { vertices, vertCount } = this;
-    const { maxVerts } = this.options;
+  public calculateNormals() {
+    const { vertCount, vertices, normals } = this;
+    const length = this.vertices.length;
 
-    if (vertCount + newVerts >= maxVerts )
-      throw new Error(`unable to subdivide! Already using ${vertCount} / ${maxVerts} verts.`);
+    let normal = new THREE.Vector3();
+    let currentVert = new THREE.Vector3();
+    // start with the last vertex
+    let lastVert = new THREE.Vector3(
+      vertices[length - 3],
+      vertices[length - 2],
+      vertices[length - 1],
+    );
+    lastVert.normalize();
 
-    // calculate the delta between this vert and the next
-    const nextVert = (vert + 1) % vertCount;
-    const vertOffset = vert * 3;
-    const nextVertOffset = nextVert * 3;
-    const factor = 1 / (newVerts + 1);
-    const dx = (vertices[nextVertOffset] - vertices[vertOffset]) * factor;
-    const dy = (vertices[nextVertOffset + 1] - vertices[vertOffset + 1]) * factor;
-    const dz = (vertices[nextVertOffset + 2] - vertices[vertOffset + 2]) * factor;
+    for (let offset = 0; offset < length; offset += 3) {
+      currentVert.x = vertices[offset];
+      currentVert.y = vertices[offset + 1];
+      currentVert.z = vertices[offset + 2];
+      currentVert.normalize();
+      normal.x = currentVert.x + lastVert.x;
+      normal.y = currentVert.y + lastVert.y;
+      normal.z = currentVert.z + lastVert.z;
 
-    // shift all the vertices ahead to make room for the new ones
-    const target = (vert + newVerts + 1) * 3;
-    vertices.copyWithin(target, nextVertOffset, vertCount * 3);
-
-    for (let offset = vertOffset; offset < target; offset += 3) {
-      vertices[offset + 3] = vertices[offset] + dx;
-      vertices[offset + 4] = vertices[offset + 1] + dy;
-      vertices[offset + 5] = 0; // this is a 2D geometry, ignore Z
+      normal.normalize();
+      normals[offset] = normal.x;
+      normals[offset + 1] = normal.y;
+      normals[offset + 2] = normal.z;
     }
 
-    this.vertCount += newVerts;
-    this.geometry.setDrawRange(0, this.vertCount);
-    this.positionAttr.needsUpdate = true;
+    this.normalAttr.needsUpdate = true;
   }
-
 }

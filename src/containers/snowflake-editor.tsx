@@ -22,12 +22,14 @@ export interface SnowflakeEditorState {
   symmetry: number;
   size: number;
   subdivisions: number;
+  showNormals: boolean;
 }
 
 const defaultState: SnowflakeEditorState = {
   symmetry: 6,
   size: 200,
   subdivisions: 1,
+  showNormals: false,
 };
 
 export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, SnowflakeEditorState> {
@@ -44,6 +46,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   private scene: THREE.Scene;
   private camera: THREE.Camera;
   private orbitControls: THREE.OrbitControls;
+  private normalsHelper: THREE.VertexNormalsHelper;
   // private light: THREE.PointLight;
 
   private snowflake: ProceduralGeometry2D;
@@ -60,7 +63,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.scene.background = new THREE.Color(0x234674);
 
     // camera
-    this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 1000);
+    this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 5000);
     this.camera.position.set(0, 0, 500);
     this.scene.add(this.camera);
 
@@ -80,18 +83,17 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.orbitControls.enablePan = false;
     this.orbitControls.enableZoom = true;
     this.orbitControls.minDistance = 200;
-    this.orbitControls.maxDistance = 600;
-    this.orbitControls.minAzimuthAngle = Math.PI * -0.35;
-    this.orbitControls.maxAzimuthAngle = Math.PI * 0.35;
-    this.orbitControls.minPolarAngle = Math.PI * 0.15;
-    this.orbitControls.maxPolarAngle = Math.PI * 0.85;
+    this.orbitControls.maxDistance = 1000;
+    // this.orbitControls.minAzimuthAngle = Math.PI * -0.35;
+    // this.orbitControls.maxAzimuthAngle = Math.PI * 0.35;
+    // this.orbitControls.minPolarAngle = Math.PI * 0.15;
+    // this.orbitControls.maxPolarAngle = Math.PI * 0.85;
     this.orbitControls.rotateSpeed = 0.25;
     this.orbitControls.dampingFactor = 0.2;
 
     // action!
     this.regenerate();
 
-    this.regenerate = this.regenerate.bind(this);
     // this.updateSimulation = this.updateSimulation.bind(this);
     this.renderFrame = this.renderFrame.bind(this);
     requestAnimationFrame(this.renderFrame);
@@ -103,14 +105,14 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     requestAnimationFrame(this.renderFrame);
   }
 
-  public componentDidMount() {
-    // this.updateTimer = window.setInterval(this.updateSimulation, 20);
-  }
+  // public componentDidMount() {
+  //   this.updateTimer = window.setInterval(this.updateSimulation, 20);
+  // }
 
-  public componentWillUnmount() {
-    window.clearInterval(this.updateTimer);
-    this.updateTimer = null;
-  }
+  // public componentWillUnmount() {
+  //   window.clearInterval(this.updateTimer);
+  //   this.updateTimer = null;
+  // }
 
   private needsRegenerate: boolean = true;
 
@@ -128,17 +130,18 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
 
   public render() {
-    const { symmetry, size, subdivisions } = this.state;
+    const { symmetry, size, subdivisions, showNormals } = this.state;
     (window as any).snowflake = this.snowflake;
 
     const buttons: ButtonProps[] = [
       { label: "Reset", onClick: () => {
         this.orbitControls.reset();
         this.needsRegenerate = true;
-        this.setState({...defaultState});
+        this.setState({...defaultState, showNormals});
       } },
       // { label: "Regenerate", onClick: this.regenerate.bind(this) },
-      { label: "Subdivide", onClick: this.subdivide.bind(this) },
+      { label: "Subdivide", onClick: () => this.subdivide() },
+      { label: showNormals ? "Hide Normals" : "Show Normals", onClick: () => this.toggleNormals() },
     ];
     const controls: SliderProps[] = [
       { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.update("symmetry", x) },
@@ -157,6 +160,19 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
         }}></div>
       </div>
     );
+  }
+
+  private toggleNormals() {
+    const { scene, snowflake } = this;
+    const showNormals = !this.state.showNormals;
+    this.setState({showNormals});
+    if (showNormals) {
+      this.normalsHelper = this.createNormalsHelper();
+      scene.add(this.normalsHelper);
+    } else {
+      scene.remove(this.normalsHelper);
+      this.normalsHelper = null;
+    }
   }
 
   private nucleate(sides: number, shapeSize: number): ProceduralGeometry2D {
@@ -180,7 +196,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   }
 
   private regenerate() {
-    let { scene, snowflake } = this;
+    let { scene, snowflake, normalsHelper } = this;
     if (snowflake) {
       scene.remove(snowflake.outline);
       scene.remove(snowflake.vertexDots);
@@ -190,15 +206,28 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size);
     (window as any).snowflake = snowflake;
     // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
+    snowflake.calculateNormals();
     scene.add(snowflake.outline);
     scene.add(snowflake.vertexDots);
+
+    if (this.state.showNormals) {
+      scene.remove(normalsHelper);
+      this.normalsHelper = normalsHelper = this.createNormalsHelper();
+      scene.add(normalsHelper);
+    }
+  }
+
+  private createNormalsHelper() {
+    return new THREE.VertexNormalsHelper(this.snowflake.outline, 20, 0x00ff00, 1);
   }
 
   private subdivide() {
-    const { snowflake } = this;
-    if (snowflake) {
-      const verts = _.range(snowflake.vertCount);
-      snowflake.subdivide(verts, this.state.subdivisions);
+    const { snowflake, normalsHelper } = this;
+    const { showNormals, subdivisions } = this.state;
+    const verts = _.range(snowflake.vertCount);
+    snowflake.subdivide(verts, subdivisions);
+    if (showNormals) {
+      normalsHelper.update();
     }
   }
 
