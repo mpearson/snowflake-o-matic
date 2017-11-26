@@ -145,31 +145,47 @@ export class ProceduralGeometry2D {
 
   public calculateNormals() {
     const { vertCount, vertices, normals } = this;
-    const length = this.vertices.length;
+    const length = vertCount * 3;
 
+    let vertical = new THREE.Vector3(0, 0, -1);
     let normal = new THREE.Vector3();
-    let currentVert = new THREE.Vector3();
-    // start with the last vertex
+    let crossProduct = new THREE.Vector3();
+    // preload vectors from the end of the array, so we can start at
+    // vertex 0 but still have the previous 2 available
     let lastVert = new THREE.Vector3(
+      vertices[length - 6],
+      vertices[length - 5],
+      vertices[length - 4],
+    );
+    let currentVert = new THREE.Vector3(
       vertices[length - 3],
       vertices[length - 2],
       vertices[length - 1],
     );
-    lastVert.normalize();
+    let currentNorm = new THREE.Vector3().subVectors(currentVert, lastVert).cross(vertical);
+    currentNorm.normalize();
+    let lastNorm = new THREE.Vector3();
 
     for (let offset = 0; offset < length; offset += 3) {
-      currentVert.x = vertices[offset];
-      currentVert.y = vertices[offset + 1];
-      currentVert.z = vertices[offset + 2];
-      currentVert.normalize();
-      normal.x = currentVert.x + lastVert.x;
-      normal.y = currentVert.y + lastVert.y;
-      normal.z = currentVert.z + lastVert.z;
+      lastNorm.copy(currentNorm);
+      lastVert.copy(currentVert);
+      currentVert.set(
+        vertices[offset],
+        vertices[offset + 1],
+        vertices[offset + 2],
+      );
+      currentNorm.subVectors(currentVert, lastVert).cross(vertical);
+      currentNorm.normalize();
+
+      normal.addVectors(currentNorm, lastNorm);
 
       normal.normalize();
-      normals[offset] = normal.x;
-      normals[offset + 1] = normal.y;
-      normals[offset + 2] = normal.z;
+      // our offset is for point C, but the normal for point B, so we need to go back one vertex.
+      // if the index goes into the negative it needs to loop around
+      const normOffset = (offset + length - 3) % length;
+      normals[normOffset] = normal.x;
+      normals[normOffset + 1] = normal.y;
+      normals[normOffset + 2] = normal.z;
     }
 
     this.normalAttr.needsUpdate = true;
