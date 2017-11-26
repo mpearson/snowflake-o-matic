@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ChangeEvent } from "react";
 // import { Link } from 'react-router';
 // import { PageSection } from '../../components/page-section';
 // import { PageHero } from '../../components/page-hero';
@@ -8,11 +9,7 @@ const OrbitControls = require("three-orbitcontrols");
 import * as _ from "lodash";
 
 import { SnowflakeControls, ButtonProps, SliderProps } from "../components/snowflake-controls";
-import { ProceduralGeometry2D } from "../models/procedural2D";
-import { ChangeEvent } from "react";
-
-// import Snowflake
-
+import { Snowflake, SnowflakeOptions } from "../models/snowflake";
 
 export interface SnowflakeEditorProps {
 
@@ -23,6 +20,7 @@ export interface SnowflakeEditorState {
   size: number;
   subdivisions: number;
   showNormals: boolean;
+  showVertexDots: boolean;
 }
 
 const defaultState: SnowflakeEditorState = {
@@ -30,14 +28,13 @@ const defaultState: SnowflakeEditorState = {
   size: 200,
   subdivisions: 1,
   showNormals: false,
+  showVertexDots: true,
 };
 
 export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, SnowflakeEditorState> {
   private container: HTMLDivElement;
   private updateTimer: number;
   private updateInterval = 20;
-  private symmetryInput: HTMLInputElement;
-  // private symmetry: number;
 
   // camera and rendering
   private width: number;
@@ -49,7 +46,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   private normalsHelper: THREE.VertexNormalsHelper;
   // private light: THREE.PointLight;
 
-  private snowflake: ProceduralGeometry2D;
+  private snowflake: Snowflake;
 
   constructor(props: SnowflakeEditorProps) {
     super(props);
@@ -97,6 +94,8 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     // this.updateSimulation = this.updateSimulation.bind(this);
     this.renderFrame = this.renderFrame.bind(this);
     requestAnimationFrame(this.renderFrame);
+
+    (window as any).editor = this;
   }
 
   private renderFrame () {
@@ -130,7 +129,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
 
   public render() {
-    const { symmetry, size, subdivisions, showNormals } = this.state;
+    const { symmetry, size, subdivisions, showNormals, showVertexDots } = this.state;
     (window as any).snowflake = this.snowflake;
 
     const buttons: ButtonProps[] = [
@@ -142,6 +141,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
       // { label: "Regenerate", onClick: this.regenerate.bind(this) },
       { label: "Subdivide", onClick: () => this.subdivide() },
       { label: showNormals ? "Hide Normals" : "Show Normals", onClick: () => this.toggleNormals() },
+      { label: showVertexDots ? "Hide Dots" : "Show Dots", onClick: () => this.toggleVertexDots() },
     ];
     const controls: SliderProps[] = [
       { label: "Symmetry", value: symmetry, min: 3, max: 12, onChange: x => this.update("symmetry", x) },
@@ -163,22 +163,28 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   }
 
   private toggleNormals() {
-    const { scene, snowflake } = this;
     const showNormals = !this.state.showNormals;
     this.setState({showNormals});
-    if (showNormals) {
-      this.normalsHelper = this.createNormalsHelper();
-      scene.add(this.normalsHelper);
-    } else {
-      scene.remove(this.normalsHelper);
-      this.normalsHelper = null;
-    }
+    if (showNormals)
+      this.snowflake.showNormals();
+    else
+      this.snowflake.hideNormals();
   }
 
-  private nucleate(sides: number, shapeSize: number): ProceduralGeometry2D {
-    const snowflake = new ProceduralGeometry2D({
+  private toggleVertexDots() {
+    const showVertexDots = !this.state.showVertexDots;
+    this.setState({showVertexDots});
+    if (showVertexDots)
+      this.snowflake.showVertexDots();
+    else
+      this.snowflake.hideVertexDots();
+  }
+
+  private nucleate(sides: number, shapeSize: number, options: Partial<SnowflakeOptions> = {}): Snowflake {
+    const snowflake = new Snowflake({
       maxVerts: 65536,
       initialVertices: sides,
+      ...options,
     });
 
     const verts = snowflake.vertices;
@@ -197,28 +203,20 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
 
   private regenerate() {
     let { scene, snowflake, normalsHelper } = this;
+    const { showNormals, showVertexDots } = this.state;
     if (snowflake) {
-      scene.remove(snowflake.outline);
-      scene.remove(snowflake.vertexDots);
+      scene.remove(snowflake);
       snowflake.geometry.dispose();
     }
 
-    this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size);
+    this.snowflake = snowflake = this.nucleate(this.state.symmetry, this.state.size, {
+      showNormals,
+      showVertexDots,
+    });
     (window as any).snowflake = snowflake;
     // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
     snowflake.calculateNormals();
-    scene.add(snowflake.outline);
-    scene.add(snowflake.vertexDots);
-
-    if (this.state.showNormals) {
-      scene.remove(normalsHelper);
-      this.normalsHelper = normalsHelper = this.createNormalsHelper();
-      scene.add(normalsHelper);
-    }
-  }
-
-  private createNormalsHelper() {
-    return new THREE.VertexNormalsHelper(this.snowflake.outline, 20, 0x00ff00, 1);
+    scene.add(snowflake);
   }
 
   private subdivide() {
@@ -226,9 +224,6 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const { showNormals, subdivisions } = this.state;
     const verts = _.range(snowflake.vertCount);
     snowflake.subdivide(verts, subdivisions);
-    if (showNormals) {
-      normalsHelper.update();
-    }
   }
 
 /*

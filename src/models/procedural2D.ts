@@ -2,11 +2,14 @@ import * as THREE from "three";
 
 export interface Procedural2DOptions {
   showVertexDots: boolean;
+  showNormals: boolean;
   initialVertices: number;
   maxVerts: number;
 }
 
-export class ProceduralGeometry2D {
+
+
+export class ProceduralGeometry2D extends THREE.Object3D {
   public options: Procedural2DOptions;
   public geometry: THREE.BufferGeometry;
   public vertices: Float32Array;
@@ -15,15 +18,20 @@ export class ProceduralGeometry2D {
   private positionAttr: THREE.BufferAttribute;
   private normalAttr: THREE.BufferAttribute;
 
-  public outline: THREE.LineLoop;
-  public outlineMaterial: THREE.LineBasicMaterial;
+  private outline: THREE.LineLoop;
+  private outlineMaterial: THREE.LineBasicMaterial;
 
-  public vertexDots: THREE.Points;
-  public vertexDotMaterial: THREE.PointsMaterial;
+  private vertexDots: THREE.Points;
+  private vertexDotMaterial: THREE.PointsMaterial;
+
+  private normalsHelper: THREE.VertexNormalsHelper;
 
   constructor(options: Partial<Procedural2DOptions>) {
+    super();
+
     this.options = {
       showVertexDots: true,
+      showNormals: false,
       initialVertices: 0,
       maxVerts: 9000,
       ...options,
@@ -55,9 +63,42 @@ export class ProceduralGeometry2D {
       // alphaTest: 0.4,
       // transparent: true
     });
-    this.vertexDots = new THREE.Points(this.geometry, this.vertexDotMaterial);
     this.outline.position.set(0, 0, 0);
     this.outline.scale.set(1, 1, 1);
+
+    this.add(this.outline);
+    if (this.options.showNormals)
+      this.showNormals();
+    if (this.options.showVertexDots)
+      this.showVertexDots();
+  }
+
+  public showVertexDots() {
+    if (!this.vertexDots) {
+      this.vertexDots = new THREE.Points(this.geometry, this.vertexDotMaterial);
+      this.add(this.vertexDots);
+    }
+  }
+
+  public hideVertexDots() {
+    if (this.vertexDots) {
+      this.remove(this.vertexDots);
+      this.vertexDots = null;
+    }
+  }
+
+  public showNormals() {
+    if (!this.normalsHelper) {
+      this.normalsHelper = new THREE.VertexNormalsHelper(this.outline, 20, 0x00ff00, 1);
+      this.add(this.normalsHelper);
+    }
+  }
+
+  public hideNormals() {
+    if (this.normalsHelper) {
+      this.remove(this.normalsHelper);
+      this.normalsHelper = null;
+    }
   }
 
   public printAngles(verts: Float32Array) {
@@ -189,5 +230,9 @@ export class ProceduralGeometry2D {
     }
 
     this.normalAttr.needsUpdate = true;
+
+    if (this.normalsHelper) {
+      this.normalsHelper.update();
+    }
   }
 }
