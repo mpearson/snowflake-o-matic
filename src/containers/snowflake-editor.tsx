@@ -10,6 +10,7 @@ import * as _ from "lodash";
 
 import { SnowflakeControls, ButtonProps, SliderProps } from "../components/snowflake-controls";
 import { Snowflake, SnowflakeOptions } from "../models/snowflake";
+import { SnowflakeRenderBuffer } from "../models/snowflake-buffer";
 
 export interface SnowflakeEditorProps {
 
@@ -40,6 +41,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   private width: number;
   private height: number;
   private renderer: THREE.WebGLRenderer;
+  private snowflakeBuffer: SnowflakeRenderBuffer;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
   private orbitControls: THREE.OrbitControls;
@@ -113,7 +115,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
   //   this.updateTimer = null;
   // }
 
-  private needsRegenerate: boolean = true;
+  private needsRegenerate: boolean = false;
 
   public componentDidUpdate() {
     if (this.needsRegenerate)

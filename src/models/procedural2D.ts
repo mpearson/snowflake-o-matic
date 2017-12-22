@@ -7,8 +7,6 @@ export interface Procedural2DOptions {
   maxVerts: number;
 }
 
-
-
 export class ProceduralGeometry2D extends THREE.Object3D {
   public options: Procedural2DOptions;
   public geometry: THREE.BufferGeometry;
@@ -184,6 +182,10 @@ export class ProceduralGeometry2D extends THREE.Object3D {
     this.calculateNormals();
   }
 
+  /**
+   * For each edge, calculates a normalized, outward-facing vector normal to the edge.
+   * For each vertex, calculates the normalized sum of the two surrounding edges' normals.
+   */
   public calculateNormals() {
     const { vertCount, vertices, normals } = this;
     const length = vertCount * 3;
