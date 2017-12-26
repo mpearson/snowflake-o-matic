@@ -12,6 +12,7 @@ export class ProceduralGeometry2D extends THREE.Object3D {
   public geometry: THREE.BufferGeometry;
   public vertices: Float32Array;
   public normals: Float32Array;
+  public lengthSquared: Float32Array;
   public vertCount: number;
   private positionAttr: THREE.BufferAttribute;
   private normalAttr: THREE.BufferAttribute;
@@ -38,6 +39,7 @@ export class ProceduralGeometry2D extends THREE.Object3D {
     this.vertCount = this.options.initialVertices;
     this.vertices = new Float32Array(this.options.maxVerts * 3);
     this.normals = new Float32Array(this.options.maxVerts * 3);
+    this.lengthSquared = new Float32Array(this.options.maxVerts);
     this.geometry = new THREE.BufferGeometry();
     this.positionAttr = new THREE.BufferAttribute(this.vertices, 3);
     this.normalAttr = new THREE.BufferAttribute(this.normals, 3);
@@ -117,20 +119,42 @@ export class ProceduralGeometry2D extends THREE.Object3D {
     console.log(entries.join(" "));
   }
 
+  public nextVert(index: number) {
+    return (index + 1) % this.vertCount;
+  }
+
+  public prevVert(index: number) {
+    return (this.vertCount + index - 1) % this.vertCount;
+  }
+
   public subdivide(verts: number[], steps: number = 1) {
+    this.insertVertices(verts, steps);
+
+    const { vertCount } = this;
+    let start: number;
+    let end: number;
+    let offset = 0;
+    for (let i = 0; i < verts.length; i++) {
+      start = verts[i] + offset;
+      end = (start + steps + 1) % vertCount;
+      this.distributeVertices(start, end, steps);
+      offset += steps;
+    }
+    this.positionAttr.needsUpdate = true;
+  }
+
+  public insertVertices(verts: number[], count: number = 1) {
     const { vertices, vertCount } = this;
     const { maxVerts } = this.options;
 
     if (verts.length === 0)
       throw new Error("ya'll need to specify at least one vertex, dingus!");
 
-    const newVertCount = verts.length * steps;
+    const newVertCount = verts.length * count;
     if (vertCount + newVertCount >= maxVerts ) {
-      throw new Error(`Error: subdivision creates ${newVertCount} new verts, but only ` +
+      throw new Error(`Error: trying to insert ${newVertCount} new verts, but only ` +
       `${maxVerts - vertCount} / ${maxVerts} verts are free.`);
     }
-
-    const stepFactor = 1 / (steps + 1);
 
     // to avoid copying anything more than once,
     // we work backwards from the end of the list of verts
@@ -139,7 +163,6 @@ export class ProceduralGeometry2D extends THREE.Object3D {
     const lastVertIndex = verts.length - 1;
     for (let i = lastVertIndex; i >= 0; i--) {
       const vert = verts[i];
-      const nextVert = (vert + 1) % vertCount; // the vertex immediately after this one (loops around)
       const vertOffsetX = vert * 3;
       const vertOffsetY = vertOffsetX + 1;
       const vertOffsetZ = vertOffsetX + 2;
@@ -149,7 +172,7 @@ export class ProceduralGeometry2D extends THREE.Object3D {
       // except not all of them, just up to the next vertex we're subdividing at
       if (i < vertCount - 1) {
         const copyStart = vert + 1;
-        const dest = copyStart + (steps * (i + 1));
+        const dest = copyStart + (count * (i + 1));
 
         let copyEnd: number;
         if (i === lastVertIndex)
@@ -159,27 +182,67 @@ export class ProceduralGeometry2D extends THREE.Object3D {
         vertices.copyWithin(dest * 3, copyStart * 3, copyEnd * 3);
       }
 
-      // calculate the vector between this vert (A) and the next (B)
-      let nextVertOffset = nextVert * 3;
-      const stepX = (vertices[nextVertOffset++] - vertices[vertOffsetX]) * stepFactor;
-      const stepY = (vertices[nextVertOffset++] - vertices[vertOffsetY]) * stepFactor;
-      const stepZ = (vertices[nextVertOffset++] - vertices[vertOffsetZ]) * stepFactor;
-
-      // now add new subdivision verts at even intervals between (A) and (B)
-      let dx = 0, dy = 0, dz = 0;
-      let newVertOffset = (vert + 1 + (steps * i)) * 3;
-      for (let step = 0; step < steps; step++) {
-        vertices[newVertOffset++] = vertices[vertOffsetX] + (dx += stepX);
-        vertices[newVertOffset++] = vertices[vertOffsetY] + (dy += stepY);
-        vertices[newVertOffset++] = vertices[vertOffsetZ] + (dz += stepZ);
+      // add new subdivision verts at even intervals between (A) and (B)
+      // set their position to the same as (A)
+      let newVertOffset = (vert + 1 + (count * i)) * 3;
+      for (let j = 0; j < count; j++) {
+        vertices[newVertOffset++] = vertices[vertOffsetX];
+        vertices[newVertOffset++] = vertices[vertOffsetY];
+        vertices[newVertOffset++] = vertices[vertOffsetZ];
       }
     }
 
-    this.vertCount += steps * verts.length;
+    this.vertCount += count * verts.length;
     this.geometry.setDrawRange(0, this.vertCount);
-    this.positionAttr.needsUpdate = true;
+  }
 
-    this.calculateNormals();
+  public distributeVertices(start: number, end: number, steps?: number) {
+    const { vertices, vertCount } = this;
+    steps = steps || (end + vertCount - start - 1) % vertCount;
+    const stepFactor = 1 / (steps + 1);
+
+    const startOffsetX = start * 3;
+    const startOffsetY = startOffsetX + 1;
+    const startOffsetZ = startOffsetX + 2;
+
+    const endOffsetX = end * 3;
+    const endOffsetY = endOffsetX + 1;
+    const endOffsetZ = endOffsetX + 2;
+
+    // calculate the vector between this vert (A) and the next (B)
+    const stepX = (vertices[endOffsetX] - vertices[startOffsetX]) * stepFactor;
+    const stepY = (vertices[endOffsetY] - vertices[startOffsetY]) * stepFactor;
+    const stepZ = (vertices[endOffsetZ] - vertices[startOffsetZ]) * stepFactor;
+
+    // now add new subdivision verts at even intervals between (A) and (B)
+    let dx = 0, dy = 0, dz = 0;
+    let offset = startOffsetX + 3;
+    for (let step = 0; step < steps; step++) {
+      vertices[offset++] = vertices[startOffsetX] + (dx += stepX);
+      vertices[offset++] = vertices[startOffsetY] + (dy += stepY);
+      vertices[offset++] = vertices[startOffsetZ] + (dz += stepZ);
+    }
+  }
+
+  public distanceSquared(vert1: number, vert2: number): number {
+    const { vertices } = this;
+    let dx = vertices[vert2] - vertices[vert1];
+    let dy = vertices[vert2 + 1] - vertices[vert1 + 1];
+    let dz = vertices[vert2 + 2] - vertices[vert1 + 2];
+    return (dx * dx) + (dy * dy) + (dz * dz);
+  }
+
+  /**
+   * For each vertex, calculate the squared distance to the next vertex.
+   */
+  public calculateSquaredLengths() {
+    const { vertices, vertCount, lengthSquared } = this;
+    const lastIndex = vertCount - 1;
+
+    for (let i = 0; i < lastIndex; i++)
+      lengthSquared[i] = this.distanceSquared(i, i + 1);
+
+    lengthSquared[lastIndex] = this.distanceSquared(lastIndex, 0);
   }
 
   /**

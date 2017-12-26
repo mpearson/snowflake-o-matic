@@ -218,6 +218,7 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     (window as any).snowflake = snowflake;
     // this.snowflake = this.nucleate(Math.round(3 + Math.random() * 9), 50 + Math.random() * 250);
     snowflake.calculateNormals();
+    snowflake.calculateSquaredLengths();
     scene.add(snowflake);
   }
 
@@ -226,6 +227,8 @@ export class SnowflakeEditor extends React.Component<SnowflakeEditorProps, Snowf
     const { showNormals, subdivisions } = this.state;
     const verts = _.range(snowflake.vertCount);
     snowflake.subdivide(verts, subdivisions);
+    snowflake.calculateNormals();
+    snowflake.calculateSquaredLengths();
   }
 
 /*

@@ -2,7 +2,6 @@ import * as React from "react";
 import "./snowflake-controls.less";
 import * as classNames from "classnames";
 
-
 export interface ButtonProps {
   label: string;
   onClick: () => void;
@@ -16,13 +15,14 @@ export const Button: React.SFC<ButtonProps> = props => {
     <button className={classList.join(" ")} onClick={props.onClick}>
       {props.label}
     </button>
-  )
+  );
 };
 
 export interface SnowflakeControlsProps {
   buttons?: ButtonProps[];
   controls?: SliderProps[];
 }
+
 export interface SliderProps {
   label: string;
   value: number;
@@ -48,7 +48,7 @@ export class SnowflakeControls extends React.Component<SnowflakeControlsProps> {
   public static defaultProps: SnowflakeControlsProps = {
     buttons: [],
     controls: [],
-  }
+  };
 
   public render() {
     const { buttons, controls } = this.props;
@@ -62,6 +62,6 @@ export class SnowflakeControls extends React.Component<SnowflakeControlsProps> {
           {controls.map((config, index) => <Slider {...config} key={index} />)}
         </div>
       </section>
-    )
+    );
   }
-};
+}
