@@ -215,12 +215,12 @@ export class ProceduralGeometry2D extends THREE.Object3D {
     const stepZ = (vertices[endOffsetZ] - vertices[startOffsetZ]) * stepFactor;
 
     // now add new subdivision verts at even intervals between (A) and (B)
-    let dx = 0, dy = 0, dz = 0;
+    // let dx = 0, dy = 0, dz = 0;
     let offset = startOffsetX + 3;
     for (let step = 0; step < steps; step++) {
-      vertices[offset++] = vertices[startOffsetX] + (dx += stepX);
-      vertices[offset++] = vertices[startOffsetY] + (dy += stepY);
-      vertices[offset++] = vertices[startOffsetZ] + (dz += stepZ);
+      vertices[offset++] = vertices[startOffsetX] + (step * stepX);
+      vertices[offset++] = vertices[startOffsetY] + (step * stepY);
+      vertices[offset++] = vertices[startOffsetZ] + (step * stepZ);
     }
   }
 
